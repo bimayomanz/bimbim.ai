@@ -1,0 +1,682 @@
+```html
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>bimbim.ai · chat</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(145deg, #1f0f00 0%, #3d1f00 50%, #2b1500 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: rgba(40, 20, 0, 0.55);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border-radius: 32px;
+            border: 1px solid rgba(255, 140, 0, 0.25);
+            box-shadow: 0 32px 72px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 120, 0, 0.1) inset;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            max-height: 90vh;
+        }
+
+        .brand {
+            text-align: center;
+            padding: 18px 32px 6px;
+            color: #ffb347;
+            font-size: 0.9rem;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            font-weight: 700;
+            text-shadow: 0 0 12px rgba(255, 140, 0, 0.3);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #e67300 0%, #b45309 100%);
+            padding: 16px 32px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            box-shadow: 0 4px 20px rgba(200, 80, 0, 0.3);
+        }
+
+        .header h1 {
+            color: #fff6e5;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .header h1 svg {
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+        }
+
+        .header .status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #ffeedb;
+            font-size: 0.85rem;
+            background: rgba(0, 0, 0, 0.25);
+            padding: 6px 18px 6px 14px;
+            border-radius: 40px;
+            border: 1px solid rgba(255, 200, 100, 0.2);
+            backdrop-filter: blur(4px);
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #fbbf24;
+            box-shadow: 0 0 12px #fbbf24;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.online {
+            background: #fb923c;
+            box-shadow: 0 0 16px #fb923c;
+        }
+
+        .status-dot.offline {
+            background: #dc2626;
+            box-shadow: 0 0 12px #dc2626;
+            animation: none;
+        }
+
+        .status-dot.checking {
+            background: #fbbf24;
+            box-shadow: 0 0 20px #fbbf24;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.5;
+                transform: scale(1.3);
+            }
+        }
+
+        /* ── model-info HILANG ── */
+        .model-info {
+            display: none;
+        }
+
+        .chat-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            min-height: 350px;
+            background: rgba(0, 0, 0, 0.15);
+        }
+
+        .chat-area::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .chat-area::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chat-area::-webkit-scrollbar-thumb {
+            background: rgba(255, 140, 0, 0.4);
+            border-radius: 12px;
+        }
+
+        .welcome-message {
+            text-align: center;
+            padding: 60px 20px;
+            color: rgba(255, 190, 120, 0.6);
+        }
+
+        .welcome-message h3 {
+            color: #ffb067;
+            margin-bottom: 14px;
+            font-size: 1.5rem;
+            font-weight: 600;
+            text-shadow: 0 0 20px rgba(255, 120, 0, 0.2);
+        }
+
+        .welcome-message p {
+            line-height: 1.7;
+            max-width: 480px;
+            margin: 0 auto;
+            color: #cc9966;
+        }
+
+        .message {
+            max-width: 85%;
+            padding: 14px 22px;
+            border-radius: 24px;
+            line-height: 1.6;
+            font-size: 0.95rem;
+            word-wrap: break-word;
+            animation: fadeIn 0.3s ease;
+            position: relative;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            color: #fff7ed;
+            border-bottom-right-radius: 6px;
+            border: 1px solid rgba(255, 200, 100, 0.2);
+        }
+
+        .message.ai {
+            align-self: flex-start;
+            background: rgba(60, 30, 0, 0.7);
+            color: #ffdbb5;
+            border: 1px solid rgba(255, 140, 0, 0.2);
+            border-bottom-left-radius: 6px;
+            backdrop-filter: blur(4px);
+        }
+
+        .message.ai.error {
+            background: rgba(180, 40, 0, 0.3);
+            border-color: rgba(255, 80, 0, 0.4);
+            color: #ffb08a;
+        }
+
+        .message.ai.loading {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 24px;
+            background: rgba(60, 30, 0, 0.5);
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 5px;
+        }
+
+        .typing-indicator span {
+            width: 8px;
+            height: 8px;
+            background: #fb923c;
+            border-radius: 50%;
+            animation: typing 1.4s infinite ease-in-out;
+            box-shadow: 0 0 8px #fb923c;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%,
+            60%,
+            100% {
+                transform: translateY(0);
+                opacity: 0.4;
+            }
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
+
+        .input-area {
+            padding: 20px 32px;
+            background: rgba(0, 0, 0, 0.4);
+            display: flex;
+            gap: 14px;
+            align-items: flex-end;
+            flex-shrink: 0;
+            border-top: 1px solid rgba(255, 140, 0, 0.15);
+            backdrop-filter: blur(8px);
+        }
+
+        .input-area textarea {
+            flex: 1;
+            padding: 14px 20px;
+            background: rgba(255, 140, 0, 0.08);
+            border: 1px solid rgba(255, 140, 0, 0.25);
+            border-radius: 30px;
+            color: #ffdec2;
+            font-size: 0.95rem;
+            outline: none;
+            resize: none;
+            min-height: 52px;
+            max-height: 140px;
+            font-family: inherit;
+            transition: all 0.3s;
+            line-height: 1.5;
+        }
+
+        .input-area textarea:focus {
+            border-color: #fb923c;
+            box-shadow: 0 0 0 4px rgba(251, 146, 60, 0.2);
+            background: rgba(255, 140, 0, 0.12);
+        }
+
+        .input-area textarea::placeholder {
+            color: rgba(255, 180, 120, 0.35);
+        }
+
+        .input-area textarea:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .send-btn {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%);
+            border: none;
+            color: #fff7ed;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.25s;
+            flex-shrink: 0;
+            box-shadow: 0 6px 20px rgba(251, 146, 60, 0.4);
+        }
+
+        .send-btn:hover {
+            transform: scale(1.08) rotate(-4deg);
+            box-shadow: 0 10px 32px rgba(251, 146, 60, 0.5);
+        }
+
+        .send-btn:active {
+            transform: scale(0.94);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .send-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+            margin-left: 3px;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+        }
+
+        .toast {
+            position: fixed;
+            top: 28px;
+            right: 28px;
+            padding: 16px 28px;
+            border-radius: 20px;
+            box-shadow: 0 24px 48px rgba(0, 0, 0, 0.6);
+            transform: translateX(150%);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 1000;
+            max-width: 420px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 200, 100, 0.15);
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.success {
+            background: rgba(180, 80, 0, 0.92);
+            color: #ffedd5;
+        }
+
+        .toast.error {
+            background: rgba(160, 30, 0, 0.92);
+            color: #ffe0cc;
+        }
+
+        .toast.info {
+            background: rgba(200, 100, 0, 0.92);
+            color: #ffedd5;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 0;
+            }
+            .container {
+                border-radius: 0;
+                max-height: 100vh;
+                height: 100vh;
+            }
+            .brand,
+            .header,
+            .chat-area,
+            .input-area {
+                padding-left: 18px;
+                padding-right: 18px;
+            }
+            .brand {
+                padding-top: 14px;
+                font-size: 0.75rem;
+            }
+            .header h1 {
+                font-size: 1.2rem;
+            }
+            .chat-area {
+                min-height: 200px;
+            }
+            .message {
+                max-width: 92%;
+                padding: 12px 18px;
+                font-size: 0.9rem;
+            }
+            .toast {
+                top: 16px;
+                right: 16px;
+                left: 16px;
+                max-width: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="brand">bimbim.ai</div>
+
+        <div class="header">
+            <h1>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                    <path d="M2 17l10 5 10-5" />
+                    <path d="M2 12l10 5 10-5" />
+                </svg>
+                bimbim.chat
+            </h1>
+            <div class="status">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="connectionStatus">menyambung…</span>
+            </div>
+        </div>
+
+        <!-- model-info dihapus total -->
+
+        <div class="chat-area" id="chatArea">
+            <div class="welcome-message" id="welcomeMessage">
+                <h3>🔥 siap membantu</h3>
+                <p>
+                    menunggu koneksi ke AI pusat…<br />
+                    sebentar, sistem sedang memeriksa.
+                </p>
+            </div>
+        </div>
+
+        <div class="input-area">
+            <textarea id="userInput" placeholder="ketik pesan …" rows="1" disabled></textarea>
+            <button class="send-btn" id="sendBtn" onclick="sendMessage()" disabled>
+                <svg viewBox="0 0 24 24">
+                    <path d="M2 21l21-9L2 3v7l15 2-15 2v7z" />
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const API_URL = 'https://albuquerque-satellite-inches-showing.trycloudflare.com';
+
+        const chatArea = document.getElementById('chatArea');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const toast = document.getElementById('toast');
+        const statusDot = document.getElementById('statusDot');
+        const connectionStatus = document.getElementById('connectionStatus');
+        const welcomeMessage = document.getElementById('welcomeMessage');
+
+        let isLoading = false;
+        let isConnected = false;
+        let currentModel = 'qwen'; // tetap pakai qwen di belakang, tapi tidak ditampilkan
+
+        // ── auto-resize textarea ──
+        userInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 140) + 'px';
+        });
+
+        userInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // ── toast ──
+        function showToast(message, type = 'info') {
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+            clearTimeout(toast._hide);
+            toast._hide = setTimeout(() => toast.classList.remove('show'), 4800);
+        }
+
+        // ── status ──
+        function setConnectionStatus(status, message) {
+            statusDot.className = 'status-dot';
+            if (status === 'online') {
+                statusDot.classList.add('online');
+                statusDot.style.background = '#fb923c';
+            } else if (status === 'offline') {
+                statusDot.classList.add('offline');
+                statusDot.style.background = '#dc2626';
+            } else {
+                statusDot.classList.add('checking');
+                statusDot.style.background = '#fbbf24';
+            }
+            connectionStatus.textContent = message;
+        }
+
+        function enableChat() {
+            userInput.disabled = false;
+            sendBtn.disabled = false;
+            userInput.focus();
+            isConnected = true;
+
+            if (welcomeMessage) {
+                welcomeMessage.innerHTML = `
+                    <h3>✅ siap ngobrol</h3>
+                    <p>AI sudah online. ketik apa pun di bawah.</p>
+                `;
+            }
+        }
+
+        function disableChat() {
+            userInput.disabled = true;
+            sendBtn.disabled = true;
+            isConnected = false;
+
+            if (welcomeMessage) {
+                welcomeMessage.innerHTML = `
+                    <h3>⛔ gagal terhubung</h3>
+                    <p>cek tunnel &amp; ollama, lalu refresh.</p>
+                `;
+            }
+        }
+
+        // ── message helpers ──
+        function addMessage(text, isUser, isError = false) {
+            if (welcomeMessage) welcomeMessage.remove();
+
+            const div = document.createElement('div');
+            div.className = `message ${isUser ? 'user' : 'ai'} ${isError ? 'error' : ''}`;
+            div.textContent = text;
+            chatArea.appendChild(div);
+            chatArea.scrollTop = chatArea.scrollHeight;
+            return div;
+        }
+
+        function addLoadingMessage() {
+            const div = document.createElement('div');
+            div.className = 'message ai loading';
+            div.id = 'loadingMessage';
+            div.innerHTML = `
+                <div class="typing-indicator">
+                    <span></span><span></span><span></span>
+                </div>
+                <span>sedang mikir…</span>
+            `;
+            chatArea.appendChild(div);
+            chatArea.scrollTop = chatArea.scrollHeight;
+            return div;
+        }
+
+        function removeLoadingMessage() {
+            const el = document.getElementById('loadingMessage');
+            if (el) el.remove();
+        }
+
+        // ── test koneksi ──
+        async function testConnection() {
+            setConnectionStatus('checking', 'menghubungkan…');
+
+            try {
+                const start = Date.now();
+                const resp = await fetch(`${API_URL}/api/tags`, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+                const data = await resp.json();
+
+                if (data.models && data.models.length > 0) {
+                    const model = data.models[0];
+                    currentModel = model.name; // tetap pakai qwen di belakang
+                    // ── TIDAK ADA LAGI ELEMENT MODEL-INFO ──
+                    setConnectionStatus('online', 'terhubung');
+                    showToast(`✅ AI siap (${model.name})`, 'success');
+                    enableChat();
+                } else {
+                    throw new Error('tidak ada model. jalankan: ollama pull qwen');
+                }
+
+            } catch (err) {
+                console.error('Connection error:', err);
+                setConnectionStatus('offline', 'gagal');
+                disableChat();
+                showToast(`❌ gagal konek: ${err.message || 'cek tunnel & ollama'}`, 'error');
+            }
+        }
+
+        // ── kirim pesan ──
+        async function sendMessage() {
+            if (isLoading || !isConnected) return;
+
+            const text = userInput.value.trim();
+            if (!text) return;
+
+            addMessage(text, true);
+            userInput.value = '';
+            userInput.style.height = 'auto';
+
+            isLoading = true;
+            sendBtn.disabled = true;
+            addLoadingMessage();
+
+            const startTime = Date.now();
+
+            try {
+                const resp = await fetch(`${API_URL}/api/generate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model: currentModel,
+                        prompt: text,
+                        stream: false
+                    })
+                });
+
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+                const data = await resp.json();
+                removeLoadingMessage();
+
+                if (data.response) {
+                    addMessage(data.response, false);
+                } else if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                // status tetap online
+                setConnectionStatus('online', 'terhubung');
+
+            } catch (err) {
+                removeLoadingMessage();
+                console.error('Chat error:', err);
+
+                let msg = 'gagal: ';
+                if (err.message.includes('Failed to fetch')) {
+                    msg += 'koneksi putus. cek tunnel & ollama.';
+                    setConnectionStatus('offline', 'terputus');
+                    disableChat();
+                } else {
+                    msg += err.message;
+                }
+
+                addMessage(msg, false, true);
+                showToast(msg, 'error');
+            } finally {
+                isLoading = false;
+                if (isConnected) sendBtn.disabled = false;
+            }
+        }
+
+        // ── start ──
+        window.addEventListener('load', () => {
+            setTimeout(testConnection, 600);
+        });
+    </script>
+</body>
+</html>
+```
